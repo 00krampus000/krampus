@@ -4,6 +4,7 @@ import android.app.*;
 import android.os.*;
 import android.content.*;
 import android.graphics.*;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.view.*;
 import android.widget.*;
@@ -19,8 +20,15 @@ public class MainActivity extends Activity {
     LinearLayout root, page, body; ScrollView scroll; int savedScrollY=0;
     int dp(float v){return (int)(v*getResources().getDisplayMetrics().density+.5f);}
     @Override public void onCreate(Bundle b){super.onCreate(b); prefs=getSharedPreferences("attendance",0); loadStudents(); buildShell();}
-    void loadStudents(){String raw=prefs.getString("students",""); if(raw.isEmpty()){String[] a={"Басевская Яна","Вдовин Данил","Ведянина Анастасия","Галичина Алена","Корнеева Марина","Косых Елизавета","Крохина Полина","Медведева Ангелина","Филатов Кирилл","Шабанова Екатерина","Шаколова Виктория","Джумазода Зикрулло","Джумазода Кароматулло","Исхоки Исмоил","Рустамов Самандар","Хаитов Сиёвуш"}; students.addAll(Arrays.asList(a)); saveStudents();}else students.addAll(Arrays.asList(raw.split("\\n",-1)));}
-    void saveStudents(){prefs.edit().putString("students",String.join("\n",students)).apply();}
+    void loadStudents(){
+        boolean initialized=prefs.getBoolean("students_initialized",false);
+        String raw=prefs.getString("students","");
+        if(!initialized){
+            String[] a={"Басевская Яна","Вдовин Данил","Ведянина Анастасия","Галичина Алена","Корнеева Марина","Косых Елизавета","Крохина Полина","Медведева Ангелина","Филатов Кирилл","Шабанова Екатерина","Шаколова Виктория","Джумазода Зикрулло","Джумазода Кароматулло","Исхоки Исмоил","Рустамов Самандар","Хаитов Сиёвуш"};
+            students.addAll(Arrays.asList(a)); saveStudents();
+        } else if(!raw.isEmpty()) students.addAll(Arrays.asList(raw.split("\\n",-1)));
+    }
+    void saveStudents(){prefs.edit().putString("students",String.join("\n",students)).putBoolean("students_initialized",true).apply();}
     TextView tv(String s,float z,int c){TextView t=new TextView(this);t.setText(s);t.setTextSize(z);t.setTextColor(c);return t;}
     GradientDrawable shape(int c,float r){GradientDrawable g=new GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;}
     LinearLayout card(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);l.setBackground(shape(WHITE,20));l.setElevation(dp(1));return l;}
@@ -44,7 +52,7 @@ public class MainActivity extends Activity {
     void cycleStudent(String n){int y=scroll.getScrollY();next(date,lesson,n);renderHomePreserveAt(y);}
     void renderHomePreserveAt(int y){root.removeAllViews();renderPage();bottomNav();scroll.post(()->scroll.scrollTo(0,y));}
     void studentMenu(String n){new AlertDialog.Builder(this).setTitle(n).setItems(new String[]{"Удалить студента","Отмена"},(d,w)->{if(w==0)confirmDelete(n);}).show();}
-    void confirmDelete(String n){new AlertDialog.Builder(this).setTitle("Удалить студента?").setMessage("Удалить «"+n+"» из группы? История отметок этого студента тоже будет удалена.").setNegativeButton("Отмена",null).setPositiveButton("Удалить",(d,w)->{students.remove(n);saveStudents();prefs.edit().apply();buildShell();}).show();}
+    void confirmDelete(String n){new AlertDialog.Builder(this).setTitle("Удалить студента?").setMessage("Удалить «"+n+"» из группы? История отметок этого студента тоже будет удалена.").setNegativeButton("Отмена",null).setPositiveButton("Удалить",(d,w)->{SharedPreferences.Editor ed=prefs.edit();for(String k:prefs.getAll().keySet())if(k.startsWith("mark/")&&k.endsWith("/"+n))ed.remove(k);students.remove(n);ed.putString("students",String.join("\n",students)).putBoolean("students_initialized",true).apply();buildShell();}).show();}
     String initials(String n){String[] p=n.trim().split("\\s+");return p.length>=2?(p[0].substring(0,1)+p[1].substring(0,1)).toUpperCase():n.substring(0,Math.min(2,n.length())).toUpperCase();}
     String shortName(String n){String[] p=n.split(" ");return p.length>1?p[0]+"\n"+p[1]:n;}
     void actions(LinearLayout b){LinearLayout r=new LinearLayout(this);r.setPadding(dp(20),dp(5),dp(20),dp(20));TextView all=action("Все были",INK,WHITE,14);all.setOnClickListener(v->{for(String n:students)setMark(date,lesson,n,"P");int y=scroll.getScrollY();renderHomePreserveAt(y);});TextView ex=action("Экспорт",ACCENT,WHITE,14);ex.setOnClickListener(v->export());r.addView(all,new LinearLayout.LayoutParams(0,dp(46),1));((LinearLayout.LayoutParams)all.getLayoutParams()).setMargins(0,0,dp(7),0);r.addView(ex,new LinearLayout.LayoutParams(0,dp(46),1));b.addView(r);}
