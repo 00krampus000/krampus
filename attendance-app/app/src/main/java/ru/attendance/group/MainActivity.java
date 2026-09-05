@@ -2,7 +2,7 @@ package ru.attendance.group;
 
 import android.app.*;import android.os.*;import android.content.*;import android.graphics.Color;import android.graphics.drawable.GradientDrawable;import android.net.Uri;import android.view.*;import android.widget.*;import java.io.*;import java.time.*;import java.time.format.*;import java.time.temporal.*;import java.util.*;
 
-public class MainActivity{
+public class MainActivity extends Activity{
  static final String[] N={"Басевская Яна","Вдовин Данил","Ведянина Анастасия","Галичина Алена","Корнеева Марина","Косых Елизавета","Крохина Полина","Медведева Ангелина","Филатов Кирилл","Шабанова Екатерина","Шаколова Виктория","Джумазода Зикрулло","Джумазода Кароматулло","Исхоки Исмоил","Рустамов Самандар","Хаитов Сиёвуш"};
  static final int GREEN=Color.rgb(18,168,137),INK=Color.rgb(23,33,43),MUTED=Color.rgb(115,128,140),BG=Color.rgb(247,249,250),LINE=Color.rgb(231,236,239),WHITE=Color.WHITE;
  SharedPreferences p; LinearLayout root,content; LocalDate date=LocalDate.now(); int tab=0,lesson=1; String pending="";
