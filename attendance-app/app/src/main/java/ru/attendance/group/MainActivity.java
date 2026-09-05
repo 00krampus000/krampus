@@ -1,35 +1,6 @@
 package ru.attendance.group;
 
-import android.app.*;
-import android.os.*;
-import android.content.*;
-import android.net.Uri;
-import android.graphics.Color;
-import android.view.*;
-import android.widget.*;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import android.app.*;import android.os.*;import android.content.*;import android.graphics.Color;import android.graphics.drawable.GradientDrawable;import android.net.Uri;import android.view.*;import android.widget.*;import java.io.*;import java.time.*;import java.time.format.*;import java.time.temporal.*;import java.util.*;
 
-public class MainActivity extends Activity {
-    static final String[] NAMES={"Басевская Яна","Вдовин Данил","Ведянина Анастасия","Галичина Алена","Корнеева Марина","Косых Елизавета","Крохина Полина","Медведева Ангелина","Филатов Кирилл","Шабанова Екатерина","Шаколова Виктория","Джумазода Зикрулло","Джумазода Кароматулло","Исхоки Исмоил","Рустамов Самандар","Хаитов Сиёвуш"};
-    SharedPreferences p; LinearLayout root,list; LocalDate date=LocalDate.now(); int page=0; String[] subjects={"","","",""};
-    @Override public void onCreate(Bundle b){super.onCreate(b);p=getSharedPreferences("attendance",0);showHome();}
-    TextView tv(String s,int size){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(Color.DKGRAY);t.setPadding(16,12,16,12);return t;}
-    Button btn(String s){Button b=new Button(this);b.setText(s);return b;}
-    void base(String title){root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(10,8,10,8);TextView h=tv(title,23);h.setTextColor(Color.rgb(20,90,100));h.setTypeface(null,1);root.addView(h);setContentView(root);}
-    void showHome(){base("ЦТБИД-266 — Посещаемость");LinearLayout nav=new LinearLayout(this);String[] a={"День","Календарь","Неделя","Месяц","Год","Расписание"};for(int i=0;i<a.length;i++){final int x=i;Button b=btn(a[i]);b.setOnClickListener(v->{if(x==5)showSchedule();else{page=x;showPage();}});nav.addView(b,new LinearLayout.LayoutParams(0,-2,1));}root.addView(nav);showPage();}
-    void showPage(){ if(page==0)day(); else if(page==1)calendar(); else stats(page); }
-    void day(){LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);TextView d=tv("Дата: "+date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),17);d.setGravity(17);box.addView(d);Button pick=btn("Выбрать дату");pick.setOnClickListener(v->datePicker());box.addView(pick);Button all=btn("✓ Все присутствуют");all.setOnClickListener(v->{for(String n:NAMES)for(int i=1;i<=4;i++)set(date,i,n,"P");day();});box.addView(all);ScrollView sv=new ScrollView(this);list=new LinearLayout(this);list.setOrientation(LinearLayout.VERTICAL);for(String n:NAMES){LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);TextView name=tv(n,15);row.addView(name,new LinearLayout.LayoutParams(0,-2,1));for(int i=1;i<=4;i++){final int no=i;Button b=btn(mark(date,no,n));b.setOnClickListener(v->{next(date,no,n);day();});row.addView(b,new LinearLayout.LayoutParams(64,55));}list.addView(row);}sv.addView(list);box.addView(sv,new LinearLayout.LayoutParams(-1,0,1));Button ex=btn("Экспорт Excel");ex.setOnClickListener(v->export());box.addView(ex);root.addView(box,new LinearLayout.LayoutParams(-1,0,1));}
-    String mark(LocalDate d,int l,String n){String s=p.getString(key(d,l,n),"");return s.equals("P")?"✓":s.equals("A")?"×":s.equals("L")?"О":s.equals("E")?"У":"—";}
-    void next(LocalDate d,int l,String n){String s=p.getString(key(d,l,n),"");String q=s.equals("")?"P":s.equals("P")?"A":s.equals("A")?"L":s.equals("L")?"E":"";set(d,l,n,q);}
-    void set(LocalDate d,int l,String n,String s){p.edit().putString(key(d,l,n),s).apply();}
-    String key(LocalDate d,int l,String n){return d+"/"+l+"/"+n;}
-    void datePicker(){new DatePickerDialog(this,(v,y,m,dd)->{date=LocalDate.of(y,m+1,dd);showPage();},date.getYear(),date.getMonthValue()-1,date.getDayOfMonth()).show();}
-    void calendar(){base("Календарь");Button pick=btn("📅 "+date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));pick.setOnClickListener(v->datePicker());root.addView(pick);TextView info=tv("Выбери дату — откроется журнал посещаемости.\nТекущая дата: "+date,18);root.addView(info);Button today=btn("Сегодня");today.setOnClickListener(v->{date=LocalDate.now();showPage();});root.addView(today);}
-    void stats(int mode){String title=mode==2?"Неделя":mode==3?"Месяц":"Год";base("Статистика — "+title);LocalDate a,b;if(mode==2){a=date.with(DayOfWeek.MONDAY);b=a.plusDays(6);}else if(mode==3){a=date.withDayOfMonth(1);b=YearMonth.from(date).atEndOfMonth();}else{a=LocalDate.of(date.getYear(),1,1);b=LocalDate.of(date.getYear(),12,31);}ScrollView sv=new ScrollView(this);LinearLayout rows=new LinearLayout(this);rows.setOrientation(LinearLayout.VERTICAL);for(String n:NAMES){int marked=0,good=0,abs=0;for(LocalDate d=a;!d.isAfter(b);d=d.plusDays(1))for(int l=1;l<=4;l++){String s=p.getString(key(d,l,n),"");if(!s.isEmpty()){marked++;if(s.equals("P")||s.equals("L"))good++;if(s.equals("A"))abs++;}}int pc=marked==0?0:good*100/marked;TextView r=tv(n+"\n✓ "+good+"   × "+abs+"   • отмечено "+marked+"   • "+pc+"%",16);rows.addView(r);}sv.addView(rows);root.addView(sv,new LinearLayout.LayoutParams(-1,0,1));}
-    void showSchedule(){base("Расписание");String[] days={"Пн","Вт","Ср","Чт","Пт","Сб","Вс"};for(int di=1;di<=7;di++){TextView h=tv(days[di-1],19);h.setTypeface(null,1);root.addView(h);for(int l=1;l<=4;l++){final int day=di,no=l;LinearLayout row=new LinearLayout(this);EditText sub=new EditText(this);sub.setHint(no+" пара — предмет");sub.setText(p.getString("sub"+day+"-"+no,""));row.addView(sub,new LinearLayout.LayoutParams(0,-2,1));Button save=btn("Сохранить");save.setOnClickListener(v->p.edit().putString("sub"+day+"-"+no,sub.getText().toString()).apply());row.addView(save);root.addView(row);}}Button back=btn("← Назад");back.setOnClickListener(v->showHome());root.addView(back);}
-    void export(){final StringBuilder html=new StringBuilder("<html><meta charset='UTF-8'><table border='1'><tr><th>Дата</th><th>Пара</th><th>Предмет</th><th>Студент</th><th>Статус</th></tr>");LocalDate a=LocalDate.of(date.getYear(),1,1),b=LocalDate.of(date.getYear(),12,31);for(LocalDate d=a;!d.isAfter(b);d=d.plusDays(1))for(int l=1;l<=4;l++)for(String n:NAMES){String s=p.getString(key(d,l,n),"");if(!s.isEmpty()){String st=s.equals("P")?"Был":s.equals("A")?"Отсутствовал":s.equals("L")?"Опоздал":"Уважительная причина";String sub=p.getString("sub"+d.getDayOfWeek().getValue()+"-"+l,"");html.append("<tr><td>").append(d).append("</td><td>").append(l).append("</td><td>").append(sub).append("</td><td>").append(n).append("</td><td>").append(st).append("</td></tr>");}}html.append("</table></html>");Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.setType("application/vnd.ms-excel");i.putExtra(Intent.EXTRA_TITLE,"Посещаемость_ЦТБИД-266_"+date.getYear()+".xls");startActivityForResult(i,42);pending=html.toString();}
-    String pending="";
-    @Override protected void onActivityResult(int r,int c,Intent data){super.onActivityResult(r,c,data);if(r==42&&c==RESULT_OK&&data!=null)try{java.io.OutputStream o=getContentResolver().openOutputStream(data.getData());o.write(pending.getBytes("UTF-8"));o.close();Toast.makeText(this,"Excel-файл сохранён",Toast.LENGTH_LONG).show();}catch(Exception e){Toast.makeText(this,"Ошибка экспорта",Toast.LENGTH_LONG).show();}}
+public class MainActivity{
 }
