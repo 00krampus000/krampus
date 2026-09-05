@@ -1,41 +1,251 @@
 package ru.attendance.group;
 
-import android.app.*;import android.os.*;import android.content.*;import android.graphics.Color;import android.graphics.drawable.GradientDrawable;import android.net.Uri;import android.view.*;import android.widget.*;import java.io.*;import java.time.*;import java.time.format.*;import java.time.temporal.*;import java.util.*;
+import android.app.*;
+import android.os.*;
+import android.content.*;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
+import android.view.*;
+import android.widget.*;
+import java.io.*;
+import java.time.*;
+import java.time.format.*;
+import java.util.*;
 
-public class MainActivity extends Activity{
- static final String[] N={"Басевская Яна","Вдовин Данил","Ведянина Анастасия","Галичина Алена","Корнеева Марина","Косых Елизавета","Крохина Полина","Медведева Ангелина","Филатов Кирилл","Шабанова Екатерина","Шаколова Виктория","Джумазода Зикрулло","Джумазода Кароматулло","Исхоки Исмоил","Рустамов Самандар","Хаитов Сиёвуш"};
- static final int GREEN=Color.rgb(18,168,137),INK=Color.rgb(23,33,43),MUTED=Color.rgb(115,128,140),BG=Color.rgb(247,249,250),LINE=Color.rgb(231,236,239),WHITE=Color.WHITE;
- SharedPreferences p; LinearLayout root,content; LocalDate date=LocalDate.now(); int tab=0,lesson=1; String pending="";
- int dp(float x){return (int)(x*getResources().getDisplayMetrics().density+.5f);} 
- TextView text(String s,float size,int color){TextView v=new TextView(this);v.setText(s);v.setTextSize(size);v.setTextColor(color);v.setFontFeatureSettings("kern");return v;}
- GradientDrawable bg(int color,float r){GradientDrawable g=new GradientDrawable();g.setColor(color);g.setCornerRadius(dp(r));return g;}
- TextView pill(String s,boolean selected){TextView v=text(s,12,selected?WHITE:MUTED);v.setGravity(17);v.setPadding(dp(13),0,dp(13),0);v.setBackground(bg(selected?GREEN:WHITE,15));return v;}
- @Override public void onCreate(Bundle b){super.onCreate(b);p=getSharedPreferences("attendance",0);show();}
- void show(){root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(BG);content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);root.addView(content,new LinearLayout.LayoutParams(-1,0,1));root.addView(nav(),new LinearLayout.LayoutParams(-1,dp(76)));setContentView(root);render();}
- LinearLayout nav(){LinearLayout n=new LinearLayout(this);n.setGravity(Gravity.CENTER);n.setPadding(dp(8),dp(8),dp(8),dp(8));n.setBackgroundColor(WHITE);String[] a={"⌂\nГлавная","▦\nРасписание","▥\nСтатистика","•••\nЕщё"};for(int i=0;i<4;i++){final int x=i;TextView b=text(a[i],11,i==tab?GREEN:MUTED);b.setGravity(17);b.setLineSpacing(0,1.05f);b.setBackground(bg(i==tab?Color.rgb(232,247,243):WHITE,17));b.setOnClickListener(v->{tab=x;render();});n.addView(b,new LinearLayout.LayoutParams(0,-1,1));}return n;}
- void render(){content.removeAllViews();if(tab==0)home();else if(tab==1)schedule();else if(tab==2)stats();else more();}
- void title(String a,String b){LinearLayout h=new LinearLayout(this);h.setOrientation(LinearLayout.VERTICAL);h.setPadding(dp(20),dp(22),dp(20),dp(8));TextView t=text(a,28,INK);t.setTypeface(null,1);h.addView(t);TextView s=text(b,14,MUTED);h.addView(s);content.addView(h);}
- void home(){title("ЦТБИД-266","Посещаемость группы");LinearLayout week=new LinearLayout(this);week.setPadding(dp(20),dp(8),dp(20),dp(10));week.setGravity(Gravity.CENTER);LocalDate monday=date.with(DayOfWeek.MONDAY);for(int i=0;i<7;i++){LocalDate d=monday.plusDays(i);TextView v=text(d.getDayOfWeek().getDisplayName(TextStyle.SHORT,new Locale("ru")).replace(".","").substring(0,2)+"\n"+d.getDayOfMonth(),12,d.equals(date)?WHITE:MUTED);v.setGravity(17);v.setLineSpacing(0,1.05f);v.setBackground(bg(d.equals(date)?GREEN:WHITE,15));final LocalDate q=d;v.setOnClickListener(x->{date=q;render();});LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(55),1);lp.setMargins(dp(3),0,dp(3),0);week.addView(v,lp);}content.addView(week);
-  int good=0,marked=0;for(String n:N){String s=mark(date,lesson,n);if(!s.equals("—")){marked++;if(s.equals("✓")||s.equals("О"))good++;}}
-  LinearLayout card=card();card.setPadding(dp(18),dp(17),dp(18),dp(17));LinearLayout line=new LinearLayout(this);line.setGravity(Gravity.CENTER_VERTICAL);LinearLayout c1=new LinearLayout(this);c1.setOrientation(LinearLayout.VERTICAL);TextView a=text("Сегодня",15,INK);a.setTypeface(null,1);c1.addView(a);c1.addView(text(date.format(DateTimeFormatter.ofPattern("d MMMM yyyy",new Locale("ru"))),13,MUTED));line.addView(c1,new LinearLayout.LayoutParams(0,-2,1));TextView ratio=text(good+" / "+N.length,22,GREEN);ratio.setTypeface(null,1);line.addView(ratio);card.addView(line);ProgressBar pb=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);pb.setMax(N.length);pb.setProgress(good);pb.setProgressTintList(android.content.res.ColorStateList.valueOf(GREEN));pb.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(LINE));LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(-1,dp(8));pp.topMargin=dp(14);card.addView(pb,pp);card.addView(text(marked==0?"Посещаемость ещё не отмечена":"Отмечено "+marked+" из "+N.length,12,MUTED));content.addView(card,margin());
-  TextView st=text("Пары",19,INK);st.setTypeface(null,1);st.setPadding(dp(20),dp(8),dp(20),dp(4));content.addView(st);
-  LinearLayout chips=new LinearLayout(this);chips.setPadding(dp(20),0,dp(20),dp(8));for(int i=1;i<=4;i++){final int q=i;TextView c=pill(i+"  "+subject(date.getDayOfWeek().getValue(),i),i==lesson);c.setOnClickListener(v->{lesson=q;render();});LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(118),dp(42));lp.setMargins(0,0,dp(8),0);chips.addView(c,lp);}ScrollView hs=new ScrollView(this);hs.setHorizontalScrollBarEnabled(false);hs.setHorizontalFadingEdgeEnabled(false);hs.addView(chips);content.addView(hs,new LinearLayout.LayoutParams(-1,dp(50)));
-  String sub=subject(date.getDayOfWeek().getValue(),lesson);LinearLayout info=card();info.setBackground(bg(Color.rgb(232,247,243),20));info.setPadding(dp(16),dp(14),dp(16),dp(14));info.addView(text(lesson+" пара",12,Color.rgb(8,122,101)));TextView it=text(sub.equals("")?"Предмет не задан":sub,19,INK);it.setTypeface(null,1);info.addView(it);content.addView(info,margin());
-  TextView ss=text("Студенты",19,INK);ss.setTypeface(null,1);ss.setPadding(dp(20),dp(4),dp(20),dp(5));content.addView(ss);
-  ScrollView sv=new ScrollView(this);LinearLayout list=new LinearLayout(this);list.setOrientation(LinearLayout.VERTICAL);list.setPadding(dp(20),0,dp(20),dp(8));for(int i=0;i<N.length;i++){final String name=N[i];LinearLayout r=card();r.setPadding(dp(14),dp(10),dp(12),dp(10));r.setGravity(Gravity.CENTER_VERTICAL);r.addView(text(String.format(Locale.US,"%02d",i+1),12,MUTED),new LinearLayout.LayoutParams(dp(30),-2));TextView nm=text(name,15,INK);nm.setMaxLines(1);nm.setEllipsize(android.text.TextUtils.TruncateAt.END);r.addView(nm,new LinearLayout.LayoutParams(0,dp(42),1));TextView badge=statusBadge(mark(date,lesson,name));r.addView(badge,new LinearLayout.LayoutParams(dp(42),dp(42)));r.setOnClickListener(v->{next(date,lesson,name);render();});LinearLayout.LayoutParams rp=new LinearLayout.LayoutParams(-1,dp(64));rp.setMargins(0,0,0,dp(7));list.addView(r,rp);}sv.addView(list);content.addView(sv,new LinearLayout.LayoutParams(-1,0,1));
-  LinearLayout actions=new LinearLayout(this);actions.setPadding(dp(20),dp(5),dp(20),dp(10));TextView all=button("✓  Все были",INK);all.setOnClickListener(v->{for(String n:N)set(date,lesson,n,"P");render();});TextView ex=outline("Экспорт");ex.setOnClickListener(v->export());actions.addView(all,new LinearLayout.LayoutParams(0,dp(52),1));LinearLayout.LayoutParams ep=new LinearLayout.LayoutParams(0,dp(52),1);ep.setMargins(dp(9),0,0,0);actions.addView(ex,ep);content.addView(actions);
- }
- LinearLayout card(){LinearLayout x=new LinearLayout(this);x.setOrientation(LinearLayout.VERTICAL);x.setBackground(bg(WHITE,21));return x;}LinearLayout.LayoutParams margin(){LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(dp(20),0,dp(20),dp(8));return lp;}
- TextView button(String s,int color){TextView b=text(s,14,WHITE);b.setGravity(17);b.setTypeface(null,1);b.setBackground(bg(color,17));return b;}TextView outline(String s){TextView b=text(s,14,INK);b.setGravity(17);b.setTypeface(null,1);b.setBackground(bg(WHITE,17));b.setPadding(dp(8),0,dp(8),0);return b;}
- TextView statusBadge(String s){boolean none=s.equals("—");int c=s.equals("✓")?GREEN:s.equals("×")?Color.rgb(214,69,69):s.equals("О")?Color.rgb(184,117,0):s.equals("У")?Color.rgb(71,116,184):MUTED;TextView v=text(s,16,none?MUTED:WHITE);v.setGravity(17);v.setBackground(bg(none?Color.rgb(241,243,245):c,22));return v;}
- void schedule(){title("Расписание","Настройте пары для каждого дня");LinearLayout days=new LinearLayout(this);days.setPadding(dp(20),0,dp(20),dp(8));for(DayOfWeek d:DayOfWeek.values()){final DayOfWeek q=d;TextView v=pill(d.getDisplayName(TextStyle.SHORT,new Locale("ru")).replace(".","").substring(0,2),d==selectedDay);v.setOnClickListener(x->{selectedDay=q;render();});days.addView(v,new LinearLayout.LayoutParams(dp(48),dp(42)));v.setPadding(0,0,0,0);}content.addView(days);for(int i=1;i<=4;i++)scheduleRow(i);}
- DayOfWeek selectedDay=DayOfWeek.MONDAY;
- void scheduleRow(int i){LinearLayout c=card();c.setPadding(dp(15),dp(12),dp(15),dp(12));TextView num=text(i+"  пара",15,INK);num.setTypeface(null,1);c.addView(num);EditText e=new EditText(this);e.setSingleLine(true);e.setText(subject(selectedDay.getValue(),i));e.setHint("Предмет");e.setBackground(bg(Color.rgb(247,249,250),15));c.addView(e,new LinearLayout.LayoutParams(-1,dp(50)));Button save=new Button(this);save.setText("Сохранить");save.setTextColor(GREEN);save.setOnClickListener(v->{p.edit().putString("sub"+selectedDay.getValue()+"-"+i,e.getText().toString()).apply();Toast.makeText(this,"Сохранено",Toast.LENGTH_SHORT).show();});c.addView(save);content.addView(c,margin());}
- void stats(){title("Статистика",date.format(DateTimeFormatter.ofPattern("LLLL yyyy",new Locale("ru"))));int all=0,good=0;for(String n:N)for(LocalDate d=LocalDate.of(date.getYear(),date.getMonthValue(),1);!d.isAfter(YearMonth.from(date).atEndOfMonth());d=d.plusDays(1))for(int l=1;l<=4;l++){String s=mark(d,l,n);if(!s.equals("—")){all++;if(s.equals("✓")||s.equals("О"))good++;}}int pct=all==0?0:good*100/all;LinearLayout hero=card();hero.setBackground(bg(INK,24));hero.setPadding(dp(20),dp(18),dp(20),dp(18));hero.addView(text("Посещаемость",13,Color.LTGRAY));TextView big=text(pct+"%",38,WHITE);big.setTypeface(null,1);hero.addView(big);hero.addView(text("за текущий месяц",12,Color.LTGRAY));content.addView(hero,margin());TextView h=text("По студентам",19,INK);h.setTypeface(null,1);h.setPadding(dp(20),dp(8),dp(20),dp(5));content.addView(h);for(String n:N){int m=0,g=0;for(LocalDate d=LocalDate.of(date.getYear(),date.getMonthValue(),1);!d.isAfter(YearMonth.from(date).atEndOfMonth());d=d.plusDays(1))for(int l=1;l<=4;l++){String s=mark(d,l,n);if(!s.equals("—")){m++;if(s.equals("✓")||s.equals("О"))g++;}}LinearLayout c=card();c.setPadding(dp(15),dp(12),dp(15),dp(12));c.addView(text(n+"\n"+(m==0?0:g*100/m)+"%   • отмечено "+m,14,INK));content.addView(c,margin());}}
- void more(){title("Ещё","Управление группой");TextView add=button("＋  Добавить студента",INK);add.setGravity(Gravity.CENTER_VERTICAL);add.setPadding(dp(16),0,0,0);add.setOnClickListener(v->addStudent());content.addView(add,margin());TextView ex=button("↗  Экспорт в Excel",GREEN);ex.setGravity(Gravity.CENTER_VERTICAL);ex.setPadding(dp(16),0,0,0);ex.setOnClickListener(v->export());content.addView(ex,margin());content.addView(text("В группе "+N.length+" студентов\nДанные хранятся на телефоне",13,MUTED));}
- void addStudent(){final EditText e=new EditText(this);e.setHint("Фамилия Имя");new AlertDialog.Builder(this).setTitle("Новый студент").setView(e).setNegativeButton("Отмена",null).setPositiveButton("Добавить",(d,w)->Toast.makeText(this,"Готово",Toast.LENGTH_SHORT).show()).show();}
- void datePicker(){new DatePickerDialog(this,(v,y,m,dd)->{date=LocalDate.of(y,m+1,dd);render();},date.getYear(),date.getMonthValue()-1,date.getDayOfMonth()).show();}
- String subject(int d,int l){return p.getString("sub"+d+"-"+l,"");}String mark(LocalDate d,int l,String n){String s=p.getString(key(d,l,n),"");return s.equals("P")?"✓":s.equals("A")?"×":s.equals("L")?"О":s.equals("E")?"У":"—";}void next(LocalDate d,int l,String n){String s=p.getString(key(d,l,n),"");String q=s.equals("")?"P":s.equals("P")?"A":s.equals("A")?"L":s.equals("L")?"E":"";set(d,l,n,q);}void set(LocalDate d,int l,String n,String s){p.edit().putString(key(d,l,n),s).apply();}String key(LocalDate d,int l,String n){return d+"/"+l+"/"+n;}
- void export(){StringBuilder h=new StringBuilder("<html><meta charset='UTF-8'><table border='1'><tr><th>Дата</th><th>Пара</th><th>Предмет</th><th>Студент</th><th>Статус</th></tr>");LocalDate a=LocalDate.of(date.getYear(),1,1),b=LocalDate.of(date.getYear(),12,31);for(LocalDate d=a;!d.isAfter(b);d=d.plusDays(1))for(int l=1;l<=4;l++)for(String n:N){String s=mark(d,l,n);if(!s.equals("—")){String st=s.equals("✓")?"Был":s.equals("×")?"Не был":s.equals("О")?"Опоздал":"Уважительная причина";h.append("<tr><td>").append(d).append("</td><td>").append(l).append("</td><td>").append(subject(d.getDayOfWeek().getValue(),l)).append("</td><td>").append(n).append("</td><td>").append(st).append("</td></tr>");}}h.append("</table></html>");pending=h.toString();Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.setType("application/vnd.ms-excel");i.putExtra(Intent.EXTRA_TITLE,"Посещаемость_ЦТБИД-266_"+date.getYear()+".xls");startActivityForResult(i,42);}
- @Override protected void onActivityResult(int r,int c,Intent data){super.onActivityResult(r,c,data);if(r==42&&c==RESULT_OK&&data!=null)try{OutputStream o=getContentResolver().openOutputStream(data.getData());o.write(pending.getBytes("UTF-8"));o.close();Toast.makeText(this,"Excel-файл сохранён",Toast.LENGTH_LONG).show();}catch(Exception e){Toast.makeText(this,"Не удалось сохранить файл",Toast.LENGTH_LONG).show();}}
+public class MainActivity extends Activity {
+    static final String[] DEFAULT_NAMES = {
+        "Басевская Яна", "Вдовин Данил", "Ведянина Анастасия", "Галичина Алена",
+        "Корнеева Марина", "Косых Елизавета", "Крохина Полина", "Медведева Ангелина",
+        "Филатов Кирилл", "Шабанова Екатерина", "Шаколова Виктория", "Джумазода Зикрулло",
+        "Джумазода Кароматулло", "Исхоки Исмоил", "Рустамов Самандар", "Хаитов Сиёвуш"
+    };
+    static final int ACCENT = Color.rgb(18,168,137);
+    static final int ACCENT_SOFT = Color.rgb(232,247,243);
+    static final int INK = Color.rgb(23,33,43);
+    static final int MUTED = Color.rgb(115,128,140);
+    static final int BG = Color.rgb(247,249,250);
+    static final int LINE = Color.rgb(231,236,239);
+    static final int WHITE = Color.WHITE;
+
+    SharedPreferences prefs;
+    LocalDate date = LocalDate.now();
+    int tab = 0;
+    int lesson = 1;
+    DayOfWeek scheduleDay = DayOfWeek.MONDAY;
+    ArrayList<String> students = new ArrayList<>();
+
+    int dp(float v) { return (int)(v * getResources().getDisplayMetrics().density + .5f); }
+
+    @Override public void onCreate(Bundle state) {
+        super.onCreate(state);
+        prefs = getSharedPreferences("attendance", MODE_PRIVATE);
+        loadStudents();
+        getWindow().setStatusBarColor(Color.rgb(128,128,128));
+        getWindow().setNavigationBarColor(WHITE);
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        buildShell();
+    }
+
+    void loadStudents() {
+        String saved = prefs.getString("students", "");
+        if (saved.isEmpty()) students.addAll(Arrays.asList(DEFAULT_NAMES));
+        else students.addAll(Arrays.asList(saved.split("\\n", -1)));
+    }
+
+    void saveStudents() {
+        prefs.edit().putString("students", String.join("\n", students)).apply();
+    }
+
+    TextView tv(String s, float size, int color) {
+        TextView v = new TextView(this);
+        v.setText(s); v.setTextSize(size); v.setTextColor(color);
+        v.setFontFeatureSettings("kern");
+        return v;
+    }
+
+    GradientDrawable shape(int color, float radius) {
+        GradientDrawable g = new GradientDrawable(); g.setColor(color); g.setCornerRadius(dp(radius)); return g;
+    }
+
+    TextView action(String label, int bg, int fg, float radius) {
+        TextView v = tv(label, 14, fg); v.setGravity(Gravity.CENTER); v.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        v.setBackground(shape(bg, radius)); return v;
+    }
+
+    LinearLayout card() {
+        LinearLayout c = new LinearLayout(this); c.setOrientation(LinearLayout.VERTICAL); c.setBackground(shape(WHITE, 22));
+        return c;
+    }
+
+    LinearLayout.LayoutParams margins(float l,float t,float r,float b) {
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1,-2);
+        p.setMargins(dp(l),dp(t),dp(r),dp(b)); return p;
+    }
+
+    void buildShell() {
+        LinearLayout shell = new LinearLayout(this); shell.setOrientation(LinearLayout.VERTICAL); shell.setBackgroundColor(BG);
+        FrameLayout page = new FrameLayout(this);
+        shell.addView(page, new LinearLayout.LayoutParams(-1,0,1));
+        shell.addView(bottomNav(), new LinearLayout.LayoutParams(-1,dp(82)));
+        setContentView(shell);
+        renderPage(page);
+    }
+
+    TextView navItem(String icon, String label, int index) {
+        TextView v = tv(icon + "\n" + label, 11, index==tab ? ACCENT : MUTED);
+        v.setGravity(Gravity.CENTER); v.setLineSpacing(0,1.0f);
+        v.setBackground(shape(index==tab ? ACCENT_SOFT : WHITE,18));
+        v.setOnClickListener(x -> { tab=index; buildShell(); });
+        return v;
+    }
+
+    LinearLayout bottomNav() {
+        LinearLayout n = new LinearLayout(this); n.setPadding(dp(8),dp(8),dp(8),dp(8)); n.setGravity(Gravity.CENTER); n.setBackgroundColor(WHITE);
+        String[] icons={"⌂","▦","◫","•••"}; String[] labels={"Главная","Расписание","Статистика","Ещё"};
+        for(int i=0;i<4;i++) n.addView(navItem(icons[i],labels[i],i),new LinearLayout.LayoutParams(0,-1,1));
+        return n;
+    }
+
+    void renderPage(FrameLayout host) {
+        host.removeAllViews();
+        ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout body = new LinearLayout(this); body.setOrientation(LinearLayout.VERTICAL); body.setPadding(0,0,0,dp(18));
+        if(tab==0) home(body); else if(tab==1) schedule(body); else if(tab==2) stats(body); else more(body);
+        scroll.addView(body); host.addView(scroll,new FrameLayout.LayoutParams(-1,-1));
+    }
+
+    void header(LinearLayout body, String title, String subtitle, boolean calendar) {
+        LinearLayout h = new LinearLayout(this); h.setGravity(Gravity.CENTER_VERTICAL); h.setPadding(dp(20),dp(24),dp(20),dp(14));
+        LinearLayout texts = new LinearLayout(this); texts.setOrientation(LinearLayout.VERTICAL);
+        TextView a=tv(title,29,INK); a.setTypeface(Typeface.DEFAULT,Typeface.BOLD); texts.addView(a);
+        TextView b=tv(subtitle,15,MUTED); b.setPadding(0,dp(3),0,0); texts.addView(b);
+        h.addView(texts,new LinearLayout.LayoutParams(0,-2,1));
+        if(calendar){ TextView cal=action("▣",WHITE,INK,17); cal.setTextSize(18); cal.setOnClickListener(v->datePicker()); h.addView(cal,new LinearLayout.LayoutParams(dp(48),dp(48))); }
+        body.addView(h);
+    }
+
+    void home(LinearLayout body) {
+        header(body,"ЦТБИД-266","Посещаемость группы",true);
+        LinearLayout week = new LinearLayout(this); week.setPadding(dp(20),dp(4),dp(20),dp(12));
+        LocalDate monday=date.minusDays(date.getDayOfWeek().getValue()-1);
+        for(int i=0;i<7;i++){
+            LocalDate d=monday.plusDays(i); String day=d.getDayOfWeek().getDisplayName(java.time.format.TextStyle.SHORT,new Locale("ru"));
+            day=day.replace(".",""); if(day.length()>2) day=day.substring(0,2);
+            TextView v=tv(day.toUpperCase(Locale.ROOT)+"\n"+d.getDayOfMonth(),12,d.equals(date)?WHITE:MUTED); v.setGravity(Gravity.CENTER); v.setLineSpacing(0,1.05f);
+            v.setBackground(shape(d.equals(date)?ACCENT:WHITE,17)); final LocalDate pick=d; v.setOnClickListener(x->{date=pick;buildShell();});
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(58),1); lp.setMargins(dp(3),0,dp(3),0); week.addView(v,lp);
+        }
+        body.addView(week);
+
+        int present=countGood(date,lesson), marked=countMarked(date,lesson);
+        LinearLayout summary=card(); summary.setPadding(dp(19),dp(17),dp(19),dp(16));
+        LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout left=new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
+        TextView today=tv(date.equals(LocalDate.now())?"Сегодня":formatDateShort(date),17,INK); today.setTypeface(Typeface.DEFAULT,Typeface.BOLD); left.addView(today);
+        left.addView(tv(formatDateLong(date),14,MUTED)); top.addView(left,new LinearLayout.LayoutParams(0,-2,1));
+        TextView ratio=tv(present+" / "+students.size(),26,ACCENT); ratio.setTypeface(Typeface.DEFAULT,Typeface.BOLD); top.addView(ratio); summary.addView(top);
+        ProgressBar progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); progress.setMax(Math.max(1,students.size())); progress.setProgress(present); progress.setProgressTintList(ColorStateList.valueOf(ACCENT)); progress.setProgressBackgroundTintList(ColorStateList.valueOf(LINE)); summary.addView(progress,new LinearLayout.LayoutParams(-1,dp(7)));
+        TextView state=tv(marked==0?"Никто ещё не отмечен":"Отмечено "+marked+" из "+students.size(),13,MUTED); state.setPadding(0,dp(10),0,0); summary.addView(state);
+        body.addView(summary,margins(20,0,20,16));
+
+        TextView pairs=tv("Пары",22,INK); pairs.setTypeface(Typeface.DEFAULT,Typeface.BOLD); pairs.setPadding(dp(20),0,dp(20),dp(9)); body.addView(pairs);
+        HorizontalScrollView pairScroll=new HorizontalScrollView(this); pairScroll.setHorizontalScrollBarEnabled(false); LinearLayout chips=new LinearLayout(this); chips.setPadding(dp(20),0,dp(20),dp(10));
+        for(int i=1;i<=4;i++){final int x=i; String sub=subject(date.getDayOfWeek().getValue(),i); String label=i+(sub.isEmpty()?"": "  "+sub); TextView c=tv(label,13,i==lesson?WHITE:MUTED); c.setGravity(Gravity.CENTER); c.setTypeface(Typeface.DEFAULT,Typeface.BOLD); c.setBackground(shape(i==lesson?ACCENT:WHITE,18)); c.setOnClickListener(v->{lesson=x;buildShell();}); LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(118),dp(45)); lp.setMargins(0,0,dp(8),0); chips.addView(c,lp);}
+        pairScroll.addView(chips); body.addView(pairScroll,new LinearLayout.LayoutParams(-1,dp(55)));
+
+        LinearLayout subjectCard=card(); subjectCard.setPadding(dp(18),dp(14),dp(18),dp(14)); subjectCard.setBackground(shape(ACCENT_SOFT,21));
+        subjectCard.addView(tv(lesson+" пара",13,Color.rgb(8,122,101))); TextView sn=tv(subject(date.getDayOfWeek().getValue(),lesson).isEmpty()?"Предмет не задан":subject(date.getDayOfWeek().getValue(),lesson),20,INK); sn.setTypeface(Typeface.DEFAULT,Typeface.BOLD); sn.setPadding(0,dp(3),0,0); subjectCard.addView(sn); body.addView(subjectCard,margins(20,0,20,17));
+
+        TextView st=tv("Студенты",22,INK); st.setTypeface(Typeface.DEFAULT,Typeface.BOLD); st.setPadding(dp(20),0,dp(20),dp(9)); body.addView(st);
+        LinearLayout list=new LinearLayout(this); list.setOrientation(LinearLayout.VERTICAL); list.setPadding(dp(20),0,dp(20),0);
+        for(int i=0;i<students.size();i++) addStudentRow(list,i,date,lesson);
+        body.addView(list);
+
+        LinearLayout actions=new LinearLayout(this); actions.setPadding(dp(20),dp(15),dp(20),0);
+        TextView all=action("✓  Все были",INK,WHITE,18); all.setOnClickListener(v->{for(String n:students)setMark(date,lesson,n,"P");buildShell();}); actions.addView(all,new LinearLayout.LayoutParams(0,dp(54),1));
+        TextView ex=action("Экспорт",WHITE,INK,18); ex.setOnClickListener(v->export()); LinearLayout.LayoutParams ep=new LinearLayout.LayoutParams(0,dp(54),1); ep.setMargins(dp(9),0,0,0); actions.addView(ex,ep); body.addView(actions);
+    }
+
+    void addStudentRow(LinearLayout list,int index,LocalDate d,int l){
+        String name=students.get(index), status=mark(d,l,name);
+        LinearLayout row=card(); row.setOrientation(LinearLayout.HORIZONTAL); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(14),dp(9),dp(10),dp(9));
+        TextView num=tv(String.format(Locale.US,"%02d",index+1),12,MUTED); num.setGravity(Gravity.CENTER); row.addView(num,new LinearLayout.LayoutParams(dp(32),dp(44)));
+        LinearLayout initials=new LinearLayout(this); initials.setGravity(Gravity.CENTER); TextView avatar=tv(initials(name),12,ACCENT); avatar.setGravity(Gravity.CENTER); avatar.setTypeface(Typeface.DEFAULT,Typeface.BOLD); avatar.setBackground(shape(ACCENT_SOFT,22)); row.addView(avatar,new LinearLayout.LayoutParams(dp(44),dp(44)));
+        TextView nm=tv(name,15,INK); nm.setTypeface(Typeface.DEFAULT,Typeface.BOLD); nm.setGravity(Gravity.CENTER_VERTICAL); nm.setMaxLines(2); nm.setPadding(dp(12),0,dp(8),0); row.addView(nm,new LinearLayout.LayoutParams(0,dp(48),1));
+        TextView badge=statusBadge(status); row.addView(badge,new LinearLayout.LayoutParams(dp(44),dp(44)));
+        row.setOnClickListener(v->{next(d,l,name);buildShell();}); LinearLayout.LayoutParams rp=new LinearLayout.LayoutParams(-1,dp(70)); rp.setMargins(0,0,0,dp(7)); list.addView(row,rp);
+    }
+
+    String initials(String n){String[] p=n.trim().split("\\s+"); if(p.length>=2)return (""+p[0].charAt(0)+p[1].charAt(0)).toUpperCase(new Locale("ru")); return n.substring(0,Math.min(2,n.length())).toUpperCase(new Locale("ru"));}
+
+    TextView statusBadge(String s){
+        int c; String label=s;
+        if(s.equals("✓"))c=ACCENT; else if(s.equals("×"))c=Color.rgb(214,69,69); else if(s.equals("О"))c=Color.rgb(190,125,0); else if(s.equals("У"))c=Color.rgb(71,116,184); else {c=Color.rgb(241,243,245); label="—";}
+        TextView v=tv(label,17,s.equals("—")?MUTED:WHITE); v.setGravity(Gravity.CENTER); v.setTypeface(Typeface.DEFAULT,Typeface.BOLD); v.setBackground(shape(c,22)); return v;
+    }
+
+    void schedule(LinearLayout body){
+        header(body,"Расписание","Предметы на каждый день",false);
+        HorizontalScrollView daysScroll=new HorizontalScrollView(this); daysScroll.setHorizontalScrollBarEnabled(false); LinearLayout days=new LinearLayout(this); days.setPadding(dp(20),0,dp(20),dp(14));
+        for(DayOfWeek d:DayOfWeek.values()){final DayOfWeek q=d; String s=d.getDisplayName(java.time.format.TextStyle.SHORT,new Locale("ru")).replace(".",""); if(s.length()>2)s=s.substring(0,2); TextView v=tv(s.toUpperCase(Locale.ROOT),13,q==scheduleDay?WHITE:MUTED); v.setGravity(Gravity.CENTER); v.setTypeface(Typeface.DEFAULT,Typeface.BOLD); v.setBackground(shape(q==scheduleDay?ACCENT:WHITE,17)); v.setOnClickListener(x->{scheduleDay=q;buildShell();}); LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(52),dp(45)); lp.setMargins(0,0,dp(7),0); days.addView(v,lp);}
+        daysScroll.addView(days); body.addView(daysScroll,new LinearLayout.LayoutParams(-1,dp(60)));
+        for(int i=1;i<=4;i++) scheduleRow(body,i);
+    }
+
+    void scheduleRow(LinearLayout body,int i){
+        LinearLayout c=card(); c.setPadding(dp(17),dp(14),dp(17),dp(14));
+        LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL); TextView n=tv(i+" пара",17,INK); n.setTypeface(Typeface.DEFAULT,Typeface.BOLD); head.addView(n,new LinearLayout.LayoutParams(0,-2,1));
+        TextView save=action("Сохранить",ACCENT_SOFT,ACCENT,14); head.addView(save,new LinearLayout.LayoutParams(dp(102),dp(38))); c.addView(head);
+        EditText e=new EditText(this); e.setSingleLine(true); e.setTextSize(15); e.setTextColor(INK); e.setHintTextColor(MUTED); e.setHint("Название предмета"); e.setPadding(dp(13),0,dp(13),0); e.setBackground(shape(BG,14)); c.addView(e,new LinearLayout.LayoutParams(-1,dp(50)));
+        String value=subject(scheduleDay.getValue(),i); e.setText(value); save.setOnClickListener(v->{prefs.edit().putString("sub"+scheduleDay.getValue()+"-"+i,e.getText().toString().trim()).apply();Toast.makeText(this,"Расписание сохранено",Toast.LENGTH_SHORT).show();});
+        body.addView(c,margins(20,0,20,10));
+    }
+
+    void stats(LinearLayout body){
+        header(body,"Статистика","Общая картина посещаемости",true);
+        int marked=0,good=0; LocalDate start=date.withDayOfMonth(1), end=date.withDayOfMonth(date.lengthOfMonth());
+        for(LocalDate d=start;!d.isAfter(end);d=d.plusDays(1))for(int l=1;l<=4;l++)for(String n:students){String s=mark(d,l,n);if(!s.equals("—")){marked++;if(s.equals("✓")||s.equals("О"))good++;}}
+        int pct=marked==0?0:good*100/marked;
+        LinearLayout hero=card(); hero.setBackground(shape(INK,24)); hero.setPadding(dp(20),dp(19),dp(20),dp(19)); hero.addView(tv("Посещаемость за "+formatMonth(date),14,Color.LTGRAY)); TextView big=tv(pct+"%",42,WHITE); big.setTypeface(Typeface.DEFAULT,Typeface.BOLD); big.setPadding(0,dp(3),0,0); hero.addView(big); hero.addView(tv(marked+" отметок · "+good+" посещений",13,Color.LTGRAY)); body.addView(hero,margins(20,0,20,18));
+        TextView h=tv("По студентам",22,INK); h.setTypeface(Typeface.DEFAULT,Typeface.BOLD); h.setPadding(dp(20),0,dp(20),dp(9)); body.addView(h);
+        for(String n:students){int m=0,g=0;for(LocalDate d=start;!d.isAfter(end);d=d.plusDays(1))for(int l=1;l<=4;l++){String s=mark(d,l,n);if(!s.equals("—")){m++;if(s.equals("✓")||s.equals("О"))g++;}} LinearLayout c=card(); c.setPadding(dp(15),dp(12),dp(15),dp(12)); LinearLayout line=new LinearLayout(this); line.setGravity(Gravity.CENTER_VERTICAL); TextView name=tv(n,14,INK); name.setTypeface(Typeface.DEFAULT,Typeface.BOLD); line.addView(name,new LinearLayout.LayoutParams(0,-2,1)); TextView percent=tv((m==0?0:g*100/m)+"%",15,ACCENT); percent.setTypeface(Typeface.DEFAULT,Typeface.BOLD); line.addView(percent); c.addView(line); c.addView(tv(m==0?"Нет отметок":"Отмечено "+m+" · присутствовал "+g,12,MUTED)); body.addView(c,margins(20,0,20,7));}
+    }
+
+    void more(LinearLayout body){
+        header(body,"Ещё","Группа и данные",false);
+        TextView add=action("＋  Добавить студента",INK,WHITE,18); add.setGravity(Gravity.CENTER_VERTICAL); add.setPadding(dp(17),0,0,0); add.setOnClickListener(v->addStudent()); body.addView(add,margins(20,0,20,9));
+        TextView ex=action("↗  Экспорт в Excel",ACCENT,WHITE,18); ex.setGravity(Gravity.CENTER_VERTICAL); ex.setPadding(dp(17),0,0,0); ex.setOnClickListener(v->export()); body.addView(ex,margins(20,0,20,18));
+        LinearLayout info=card(); info.setPadding(dp(17),dp(15),dp(17),dp(15)); info.addView(tv("Состав группы",14,MUTED)); TextView count=tv(students.size()+" студентов",20,INK); count.setTypeface(Typeface.DEFAULT,Typeface.BOLD); count.setPadding(0,dp(3),0,0); info.addView(count); body.addView(info,margins(20,0,20,12));
+        TextView hint=tv("Все отметки и расписание хранятся только на этом телефоне.",13,MUTED); hint.setPadding(dp(20),dp(4),dp(20),0); body.addView(hint);
+    }
+
+    void addStudent(){
+        final EditText input=new EditText(this); input.setHint("Фамилия Имя"); input.setSingleLine(true); input.setPadding(dp(12),0,dp(12),0); input.setBackground(shape(BG,14));
+        LinearLayout wrap=new LinearLayout(this); wrap.setPadding(dp(20),0,dp(20),0); wrap.addView(input,new LinearLayout.LayoutParams(-1,dp(52)));
+        new AlertDialog.Builder(this).setTitle("Новый студент").setView(wrap).setNegativeButton("Отмена",null).setPositiveButton("Добавить",(d,w)->{String s=input.getText().toString().trim();if(!s.isEmpty()){students.add(s);saveStudents();buildShell();}}).show();
+    }
+
+    void datePicker(){new DatePickerDialog(this,(v,y,m,day)->{date=LocalDate.of(y,m+1,day);buildShell();},date.getYear(),date.getMonthValue()-1,date.getDayOfMonth()).show();}
+
+    String formatDateLong(LocalDate d){return d.format(DateTimeFormatter.ofPattern("d MMMM yyyy",new Locale("ru")));}
+    String formatDateShort(LocalDate d){return d.format(DateTimeFormatter.ofPattern("d MMMM",new Locale("ru")));}
+    String formatMonth(LocalDate d){return d.format(DateTimeFormatter.ofPattern("LLLL yyyy",new Locale("ru")));}
+    String subject(int day,int l){return prefs.getString("sub"+day+"-"+l,"");}
+    String key(LocalDate d,int l,String n){return "mark/"+d+"/"+l+"/"+n;}
+    String mark(LocalDate d,int l,String n){String s=prefs.getString(key(d,l,n),"");return s.equals("P")?"✓":s.equals("A")?"×":s.equals("L")?"О":s.equals("E")?"У":"—";}
+    void setMark(LocalDate d,int l,String n,String s){prefs.edit().putString(key(d,l,n),s).apply();}
+    void next(LocalDate d,int l,String n){String s=prefs.getString(key(d,l,n),"");String q=s.equals("")?"P":s.equals("P")?"A":s.equals("A")?"L":s.equals("L")?"E":"";setMark(d,l,n,q);}
+    int countMarked(LocalDate d,int l){int c=0;for(String n:students)if(!mark(d,l,n).equals("—"))c++;return c;}
+    int countGood(LocalDate d,int l){int c=0;for(String n:students){String s=mark(d,l,n);if(s.equals("✓")||s.equals("О"))c++;}return c;}
+
+    void export(){
+        String name="Посещаемость_ЦТБИД-266_"+date.getYear()+".xls";
+        Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT); i.setType("application/vnd.ms-excel"); i.putExtra(Intent.EXTRA_TITLE,name); startActivityForResult(i,42);
+    }
+
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){super.onActivityResult(requestCode,resultCode,data);if(requestCode!=42||resultCode!=RESULT_OK||data==null)return;Uri uri=data.getData();StringBuilder h=new StringBuilder("<html><head><meta charset='UTF-8'></head><body><table border='1'><tr><th>Дата</th><th>Пара</th><th>Предмет</th><th>Студент</th><th>Статус</th></tr>");LocalDate a=LocalDate.of(date.getYear(),1,1),b=LocalDate.of(date.getYear(),12,31);for(LocalDate d=a;!d.isAfter(b);d=d.plusDays(1))for(int l=1;l<=4;l++)for(String n:students){String s=mark(d,l,n);if(!s.equals("—")){String st=s.equals("✓")?"Был":s.equals("×")?"Не был":s.equals("О")?"Опоздал":"Уважительная причина";h.append("<tr><td>").append(d).append("</td><td>").append(l).append("</td><td>").append(escape(subject(d.getDayOfWeek().getValue(),l))).append("</td><td>").append(escape(n)).append("</td><td>").append(st).append("</td></tr>");}}h.append("</table></body></html>");try(OutputStream out=getContentResolver().openOutputStream(uri)){out.write(h.toString().getBytes("UTF-8"));Toast.makeText(this,"Excel-файл сохранён",Toast.LENGTH_SHORT).show();}catch(Exception e){Toast.makeText(this,"Не удалось сохранить файл",Toast.LENGTH_LONG).show();}}
+    String escape(String s){return s.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;");}
 }
