@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
         android:allowBackup="true"
+        android:icon="@drawable/ic_attendance"
         android:label="Посещаемость ЦТБИД-266"
         android:supportsRtl="true"
         android:theme="@style/Theme.Attendance">
