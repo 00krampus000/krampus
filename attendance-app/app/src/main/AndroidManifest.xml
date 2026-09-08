@@ -5,7 +5,7 @@
         android:label="Посещаемость ЦТБИД-266"
         android:supportsRtl="true"
         android:theme="@style/Theme.Attendance">
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity android:name=".ScheduleMainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
