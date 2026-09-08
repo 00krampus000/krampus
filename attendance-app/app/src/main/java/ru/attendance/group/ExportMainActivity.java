@@ -7,7 +7,7 @@ import android.widget.Toast;
 import java.io.OutputStream;
 import java.time.LocalDate;
 
-public class ExportMainActivity extends ScheduleMainActivity {
+public class ExportMainActivity extends FinalMainActivity {
     private static final int CREATE_DOCUMENT = 9001;
     private byte[] pendingExport;
 
