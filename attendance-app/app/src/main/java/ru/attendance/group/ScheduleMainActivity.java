@@ -1,13 +1,20 @@
 package ru.attendance.group;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.Locale;
 
 public class ScheduleMainActivity extends MainActivity {
+    private static final int CREATE_EXPORT = 4217;
+    private String pendingExport;
+
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         seedSchedule();
@@ -29,6 +36,52 @@ public class ScheduleMainActivity extends MainActivity {
             row.addView(x, new LinearLayout.LayoutParams(0, dp(52), 1));
         }
         b.addView(row);
+    }
+
+    @Override void export() {
+        try {
+            StringBuilder s = new StringBuilder("Дата\tПара\tВремя\tПредмет");
+            for (String n : students) s.append("\t").append(n);
+            s.append("\n");
+            LocalDate start = date.withDayOfMonth(1), end = date.withDayOfMonth(date.lengthOfMonth());
+            for (LocalDate d = start; !d.isAfter(end); d = d.plusDays(1)) {
+                for (int l = 1; l <= 4; l++) {
+                    boolean any = false;
+                    for (String n : students) if (!mark(d, l, n).equals("—")) { any = true; break; }
+                    if (!any) continue;
+                    s.append(d).append("\t").append(l).append("\t")
+                            .append(timeRange(d.getDayOfWeek().getValue(), l)).append("\t")
+                            .append(subject(d.getDayOfWeek().getValue(), l));
+                    for (String n : students) s.append("\t").append(mark(d, l, n));
+                    s.append("\n");
+                }
+            }
+            pendingExport = s.toString();
+            Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("application/vnd.ms-excel");
+            i.putExtra(Intent.EXTRA_TITLE, "Посещаемость_ЦТБИД-266.xls");
+            startActivityForResult(i, CREATE_EXPORT);
+        } catch (Exception e) {
+            Toast.makeText(this, "Ошибка экспорта", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != CREATE_EXPORT || resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        try {
+            Uri uri = data.getData();
+            try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                if (out == null) throw new java.io.IOException("Не удалось открыть файл");
+                out.write(pendingExport.getBytes("UTF-16LE"));
+                out.flush();
+            }
+            pendingExport = null;
+            Toast.makeText(this, "Excel-файл сохранён", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Ошибка сохранения Excel", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void put(android.content.SharedPreferences.Editor e, int day, int lesson, String subject, String from, String to) {
